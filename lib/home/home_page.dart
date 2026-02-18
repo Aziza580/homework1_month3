@@ -1,135 +1,227 @@
 import 'package:flutter/material.dart';
 import 'package:to_do_list_month3/add/add_todo_page.dart';
+import 'package:to_do_list_month3/database/app_database.dart';
+import 'package:to_do_list_month3/database/todo_repository.dart';
+import 'package:to_do_list_month3/home/home_state.dart';
+import 'package:to_do_list_month3/home/home_view_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'todo_tile.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
+
   final String title;
-  
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  final List<Task> tasks = []; //[] - изначально пустой список
-  final String date = '10.02.26';
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    print('MyHomepage - build');
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: tasks.length, //Сколько задач
-        itemBuilder: (context, index) {
-          final task = tasks [index];
-
-          return Card(
-            color: Colors.blueAccent,
-            child: Padding(
-              padding: EdgeInsets.all(15),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(task.title, style: TextStyle(decoration: task.isDone ? TextDecoration.lineThrough : TextDecoration.none, fontSize: 20, color: Colors.white),
-                    ), //TextDecoration.lineThrough - это зачеркивает текст
-                    Text(task.date, style: TextStyle(fontSize: 12,color: Colors.white),
-                    ),
-                    SizedBox(height: 10),
-
-                     //ElevatedButton.icon(
-                     FloatingActionButton(
-                        onPressed: () {
-                          setState(() { 
-                            tasks[index].isDone = !tasks[index].isDone;
-                          });
-                        },//icon
-                         child: Icon(task.isDone ? Icons.check_box : Icons.check_box_outline_blank),
-                         //task.isDone - меняется только эта задача, а не все
-                        //label: Text(''),
-                        //style: ElevatedButton.styleFrom(
-                        //),
-                        //),
-                     ),
-                  ],
-                ),
-              ),
-          );
-        },
-        ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () async {
-    final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddTodoPage()),
-    );
-    //push - открывает экран
-    //pop - закрывает экран и возвращает данные 
-    //await - главеый экран ждет результат
-    if (result != null) {
-      setState(() {
-        tasks.add(
-          Task(
-            title: result, 
-            date: '10.02.26')
-        );
-      });
-    }
-        }
-      ),
-    );
-  }
+  late final HomeCubit cubit;
+  late final TodoRepositoryImpl repo;
   
-   @override
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    print('MyHomePage - initState');
+    final db = AppDatabase();
+    repo = TodoRepositoryImpl(db);
+    final vm = HomeViewModel(repo: repo);
+    cubit = HomeCubit(vm: vm);
+    //View попросил список
+    cubit.fetchList();
   }
 
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
-    print('MyHomePage - didChangeDependecies');
+    //Когда меняется тема, язык приложения 
+    print("MyHomePage - didChangeDependencies");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: cubit,
+      child: Scaffold(
+      //   appBar: AppBar(
+      //   title: Text("Мои задачи"),
+      // ),
+       body: BlocBuilder<HomeCubit, HomeState>(
+        builder: (context, state) {
+          if (state.isEmpty) {
+            return Center(child: Text("У вас ни одной задачи!"));
+          }
+
+            return Scaffold(
+        body: SafeArea(
+          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              const Text(
+                'Мои задачи',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(height: 1, color: Colors.black26),
+              const SizedBox(height: 18),
+
+              Expanded(
+                child: ListView.separated(
+                  itemCount: state.items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final todoItem = state.items[index];
+                    return TodoTile(
+                      title: todoItem.title, 
+                      dateText: todoItem.date, 
+                      isDone: todoItem.isDone, 
+                      onChanged: (v) {
+                       // setState(() => todoItem.isFinished = v;
+                      }
+                      );
+                  },
+                )
+                ),
+                const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                // child: ElevatedButton.icon(
+                //   onPressed: () {
+                //     _navigateToAddTodoPage(context);
+                //   },
+                //   icon: const Icon(Icons.add, size: 26),
+                //   label: const Text(
+                //     'Добавить задачу',
+                //     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                //   ),
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: const Color(0xFF0A72FF),
+                //     foregroundColor: Colors.white,
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(16),
+                //     ),
+                //     elevation: 0,
+                //   ),
+                // ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+          )
+          ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Colors.blue,
+            child: const Icon(Icons.add, color: Colors.white),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (_) => AddTodoPage(repo: repo),
+              ),
+              );
+              if (result == true) {
+                setState(() {
+                cubit.fetchList();
+                });
+              }
+            },
+            ),
+       );
+        },
+      ),
+      ),
+      );
+   
+      //  return Scaffold(
+      //   body: SafeArea(
+      //     child: Padding(padding: const EdgeInsets.symmetric(horizontal: 18),
+      //     child: Column(
+      //       children: [
+      //         const SizedBox(height: 10),
+      //         const Text(
+      //           'Мои задачи',
+      //           style: TextStyle(
+      //             fontSize: 28,
+      //             fontWeight: FontWeight.w600,
+      //             color: Colors.black87,
+      //           ),
+      //         ),
+      //         const SizedBox(height: 10),
+      //         Container(height: 1, color: Colors.black26),
+      //         const SizedBox(height: 18),
+
+      //         Expanded(
+      //           child: ListView.separated(
+      //             itemCount: _todoList.length,
+      //             separatorBuilder: (_, __) => const SizedBox(height: 14),
+      //             itemBuilder: (context, index) {
+      //               final todoItem = _todoList[index];
+      //               return TodoTile(
+      //                 title: todoItem.title, 
+      //                 dateText: todoItem.date, 
+      //                 isDone: todoItem.isDone, 
+      //                 onChanged: (v) {
+      //                  // setState(() => todoItem.isFinished = v;
+      //                 }
+      //                 );
+      //             },
+      //           )
+      //           ),
+      //           const SizedBox(height: 14),
+      //         SizedBox(
+      //           width: double.infinity,
+      //           height: 60,
+      //           child: ElevatedButton.icon(
+      //             onPressed: () {
+      //               _navigateToAddTodoPage(context);
+      //             },
+      //             icon: const Icon(Icons.add, size: 26),
+      //             label: const Text(
+      //               'Добавить задачу',
+      //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+      //             ),
+      //             style: ElevatedButton.styleFrom(
+      //               backgroundColor: const Color(0xFF0A72FF),
+      //               foregroundColor: Colors.white,
+      //               shape: RoundedRectangleBorder(
+      //                 borderRadius: BorderRadius.circular(16),
+      //               ),
+      //               elevation: 0,
+      //             ),
+      //           ),
+      //         ),
+      //         const SizedBox(height: 16),
+      //       ],
+      //     ),
+      //     )
+      //     ),
+      //  );
   }
 
   @override
   void didUpdateWidget(covariant MyHomePage oldWidget) {
-    // TODO: implement didUpdateWidget
     super.didUpdateWidget(oldWidget);
-    print('MyHomePage - didUpdateWidget');
+    print("MyHomePage - didUpdateWidget");
   }
 
   @override
   void deactivate() {
-    // TODO: implement deactivate
     super.deactivate();
-    print('MyHomePage - deactivate');
+    //НЕ используется
+    print("MyHomePage - deactivate");
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
-    print('MyHomePage - dispose');
+    //Здесь выключаем все таймеры, подписки (Stream)
+    print("MyHomePage - dispose");
   }
-
-}
-
-class Task {
-  final String title;
-  final String date;
-  bool isDone;
-
-  Task({required this.title, required this.date, this.isDone = false});
 }
