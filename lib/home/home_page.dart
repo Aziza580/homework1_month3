@@ -5,6 +5,7 @@ import 'package:to_do_list_month3/database/todo_repository.dart';
 import 'package:to_do_list_month3/home/home_state.dart';
 import 'package:to_do_list_month3/home/home_view_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:to_do_list_month3/settings/settings_page.dart';
 import 'todo_tile.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -113,6 +114,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 // ),
               ),
               const SizedBox(height: 16),
+
+               ElevatedButton.icon(
+                 icon: Icon(Icons.settings, color: Colors.blue),
+                 label: Text('settings'),
+                 onPressed: () => Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (_) => SettingsPage())), 
+                   ),
+
+                   SizedBox(height: 20),
             ],
           ),
           )
