@@ -1,5 +1,4 @@
 import 'package:to_do_list_month3/database/app_database.dart';
-import 'package:to_do_list_month3/todo.dart';
 
 abstract class TodoRepository {
   //Набор функционала для работы с хранилищем
@@ -16,8 +15,8 @@ class TodoRepositoryImpl implements TodoRepository {
 
 //Репозиторий просит данные с хранилищем
   @override
-  Future<List<Todo>> getList() => db.getList();
+  Future<List<Todo>> getList() => db.getTodoList();
   
   @override
-  Future<void> addTodo(Todo todo) => db.addTodo(todo);
+  Future<void> addTodo(Todo todo) => db.getTodoList();
 }

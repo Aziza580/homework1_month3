@@ -1,6 +1,6 @@
+import 'package:to_do_list_month3/database/app_database.dart';
 import 'package:to_do_list_month3/database/todo_repository.dart';
 import 'package:to_do_list_month3/home/home_state.dart';
-import 'package:to_do_list_month3/todo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 //описываем viewModel
@@ -20,9 +20,11 @@ class HomeCubit extends Cubit<HomeState> {
 //При инициализации cubit фиксируем первоначальное состояние 
   HomeCubit({required this.vm}) : super(HomeState.initial());
 
-  Future<void> fetchList() async {
+//МЫ ПРОСИМ ВЫПОЛНИТЬ ПРОЦЕСС В БУДУЩЕМ
+  Future<void> fetchList() async {//параллельно выполни подтягивание данных
+  //async - параллельно
     try {
-      final items = await vm.fetchList();
+      final items = await vm.fetchList(); //ЖДЕМ ЗАВЕРШЕНИЯ ПОДТЯГИВАНИЯ ДАННЫХ
       if (items.isEmpty) {
       //поменять состояние
       emit(state.copyWith(items: items, isEmpty: true));

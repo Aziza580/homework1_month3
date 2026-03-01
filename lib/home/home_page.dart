@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:to_do_list_month3/add/add_todo_page.dart';
 import 'package:to_do_list_month3/database/app_database.dart';
 import 'package:to_do_list_month3/database/todo_repository.dart';
+import 'package:to_do_list_month3/details/todo_detail_page.dart';
 import 'package:to_do_list_month3/home/home_state.dart';
 import 'package:to_do_list_month3/home/home_view_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,17 +22,25 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late final HomeCubit cubit;
   late final TodoRepositoryImpl repo;
+  late SharedPreferences preferences;
   
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    //_getPreferences();
+
     final db = AppDatabase();
     repo = TodoRepositoryImpl(db);
     final vm = HomeViewModel(repo: repo);
     cubit = HomeCubit(vm: vm);
     //View попросил список
     cubit.fetchList();
+
+    makeOrder(); 
+    orderInProcess();
+   // finishOrder();
   }
 
   @override
@@ -52,7 +62,45 @@ class _MyHomePageState extends State<MyHomePage> {
        body: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {
           if (state.isEmpty) {
-            return Center(child: Text("У вас ни одной задачи!"));
+            return Column(
+              children: [
+                SizedBox(height: 150),
+                Text("У вас ни одной задачи!"),
+                Spacer(),
+                SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+              final result = await Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (_) => AddTodoPage(repo: repo),
+              ),
+              );
+              if (result == true) {
+                setState(() {
+                cubit.fetchList();
+                });
+              }
+            },
+                  icon: const Icon(Icons.add, size: 26),
+                  label: const Text(
+                    'Добавить задачу',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0A72FF),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              SizedBox(height: 50)
+              ],
+            );
           }
 
             return Scaffold(
@@ -79,14 +127,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 14),
                   itemBuilder: (context, index) {
                     final todoItem = state.items[index];
-                    return TodoTile(
-                      title: todoItem.title, 
-                      dateText: todoItem.date, 
-                      isDone: todoItem.isDone, 
-                      onChanged: (v) {
-                       // setState(() => todoItem.isFinished = v;
-                      }
-                      );
+
+                     return TodoTile(
+                       title: todoItem.title, 
+                       dateText: todoItem.date, 
+                       isDone: todoItem.isDone, 
+                       onChanged: (v) {
+                        // setState(() => todoItem.isFinished = v;
+                       },
+                       );
+                    // return ListTile(
+                    //   title: Text(todoItem.title),
+                    //   onTap: () => _navigateToDetailsPage(context),
+                    // );
                   },
                 )
                 ),
@@ -124,6 +177,15 @@ class _MyHomePageState extends State<MyHomePage> {
                    ),
 
                    SizedBox(height: 20),
+
+                   ElevatedButton(
+                    child: Text('Details'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => TodoDetailPage())),
+                      ),
+
+                      SizedBox(height: 20),
             ],
           ),
           )
@@ -235,4 +297,20 @@ class _MyHomePageState extends State<MyHomePage> {
     //Здесь выключаем все таймеры, подписки (Stream)
     print("MyHomePage - dispose");
   }
+
+
+  void makeOrder() {
+    print('Taking order');
+  }
+
+  Future<String> orderInProcess() {
+    return Future.delayed(
+      Duration(seconds: 3),
+      () => 'Your order is ready!'
+    );
+  }
+
+  // void finishOrder() {
+  //   print('Your order is finished!');
+  // }
 }

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list_month3/add/add_state.dart';
 import 'dart:async';
 import 'package:to_do_list_month3/add/add_view_model.dart';
+import 'package:to_do_list_month3/database/app_database.dart';
 import 'package:to_do_list_month3/database/todo_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:to_do_list_month3/main.dart';
 
 class AddTodoPage extends StatefulWidget{
   final TodoRepository repo;
@@ -89,7 +91,7 @@ class _AddTodoPage extends State<AddTodoPage> {
                 height: 60,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                   context.read<AddCubit>().save(_textEditingController.text);
+                   database.insertTodo(TodosCompanion.insert(title: _textEditingController.text, date: DateTime.now().toString()));
                   },
                   label: const Text(
                     'Сохранить',
@@ -113,6 +115,10 @@ class _AddTodoPage extends State<AddTodoPage> {
     ),
     ),
     );
+  }
+
+  Future<void> insertTodo() async {
+    
   }
 
   @override
